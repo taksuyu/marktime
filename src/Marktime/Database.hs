@@ -85,18 +85,25 @@ runDB dbPath dbAction = do
   runNoLoggingT . withSqlitePool dbPath 1 $
     \pool -> liftIO $ runSqlPool dbAction pool
 
-startTask :: DB -> Key TaskStore -> IO ()
+data StartTaskError
+  = AlreadyStarted
+  | TaskNotFound
+  deriving (Eq, Show)
+
+startTask :: DB -> Key TaskStore -> IO (Either StartTaskError ())
 startTask db key = do
   currentTime <- getCurrentTime
   runDB db $ do
     task <- get key
     case task of
-      Just TaskStore{..}
-        -> if taskStoreStartTime == Nothing
-           then update key [TaskStoreStartTime =. Just currentTime]
-           else pure ()
-      Nothing
-        -> pure ()
+      Just TaskStore{..} ->
+        if taskStoreStartTime == Nothing
+        then do
+        update key [TaskStoreStartTime =. Just currentTime]
+        pure $ Right ()
+        else pure (Left AlreadyStarted)
+      Nothing ->
+        pure (Left TaskNotFound)
 
 insertTask :: DB -> Task -> IO (Key TaskStore)
 insertTask db (Task t) = do

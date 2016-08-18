@@ -23,20 +23,25 @@ main = runMTParser >>=
   \ MarktimeOpts{..} -> do
     db <- migrateDB =<< checkDBLocation mtDatabase
     case mtCommand of
-      StartCommand StartOpts{..}
-        -> startTask db (toSqlKey startTaskId)
-      StopCommand StopOpts {..}
-        -> todoMessage
-      AddCommand AddOpts{..}
-        -> () <$ insertTask db addTaskName
-      ListCommand
-        -> do tasks <- getAllTasks db
-              listTaskHeader
-              mapM_ printTask tasks
-      InfoCommand InfoOpts{..}
-        -> taskByKey db (toSqlKey infoTaskId) >>=
-           \case
-             Just a -> print a
-             Nothing -> putStrLn $ "There was no task associated with: " <> showT infoTaskId
-      ReportCommand ReportOpts{..}
-        -> todoMessage
+      StartCommand StartOpts{..} ->
+        startTask db (toSqlKey startTaskId) >>=
+        let taskShow = "Task " <> showT startTaskId in
+        \case
+          Right _ -> putStrLn $ taskShow <> " has been started."
+          Left AlreadyStarted -> putStrLn $ taskShow <> " has already been started."
+          Left TaskNotFound -> putStrLn $ taskShow <> " doesn't exist."
+      StopCommand StopOpts {..} ->
+        todoMessage
+      AddCommand AddOpts{..} ->
+        () <$ insertTask db addTaskName
+      ListCommand -> do
+        tasks <- getAllTasks db
+        listTaskHeader
+        mapM_ printTask tasks
+      InfoCommand InfoOpts{..} ->
+        taskByKey db (toSqlKey infoTaskId) >>=
+        \case
+          Just a -> print a
+          Nothing -> putStrLn $ "There was no task associated with: " <> showT infoTaskId
+      ReportCommand ReportOpts{..} ->
+        todoMessage
