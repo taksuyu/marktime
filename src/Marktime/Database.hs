@@ -97,11 +97,12 @@ startTask db key = do
     task <- get key
     case task of
       Just TaskStore{..} ->
-        if taskStoreStartTime == Nothing
-        then do
-        update key [TaskStoreStartTime =. Just currentTime]
-        pure $ Right ()
-        else pure (Left AlreadyStarted)
+        case taskStoreStartTime of
+          Nothing -> do
+            update key [TaskStoreStartTime =. Just currentTime]
+            pure $ Right ()
+          Just _ ->
+            pure (Left AlreadyStarted)
       Nothing ->
         pure (Left TaskNotFound)
 
