@@ -85,26 +85,36 @@ runDB dbPath dbAction = do
   runNoLoggingT . withSqlitePool dbPath 1 $
     \pool -> liftIO $ runSqlPool dbAction pool
 
-data StartTaskError
-  = AlreadyStarted
+data TaskError
+  = AlreadyThere
   | TaskNotFound
   deriving (Eq, Show)
 
-startTask :: DB -> Key TaskStore -> IO (Either StartTaskError ())
-startTask db key = do
+-- | All time fields have the same property that you want to check if it's
+-- already there before ever setting the current time.
+updateTimeOnTask
+  :: (TaskStore -> Maybe Time) -> EntityField TaskStore (Maybe Time)
+  -> DB -> Key TaskStore -> IO (Either TaskError ())
+updateTimeOnTask timeField entityField db key = do
   currentTime <- getCurrentTime
   runDB db $ do
     task <- get key
     case task of
-      Just TaskStore{..} ->
-        case taskStoreStartTime of
+      Just a ->
+        case timeField a of
           Nothing -> do
-            update key [TaskStoreStartTime =. Just currentTime]
+            update key [entityField =. Just currentTime]
             pure $ Right ()
           Just _ ->
-            pure (Left AlreadyStarted)
+            pure (Left AlreadyThere)
       Nothing ->
         pure (Left TaskNotFound)
+
+startTask :: DB -> Key TaskStore -> IO (Either TaskError ())
+startTask = updateTimeOnTask taskStoreStartTime TaskStoreStartTime
+
+stopTask :: DB -> Key TaskStore -> IO (Either TaskError ())
+stopTask = updateTimeOnTask taskStoreStopTime TaskStoreStopTime
 
 insertTask :: DB -> Task -> IO (Key TaskStore)
 insertTask db (Task t) = do

@@ -25,13 +25,10 @@ main = runMTParser >>=
     case mtCommand of
       StartCommand StartOpts{..} ->
         startTask db (toSqlKey startTaskId) >>=
-        let taskShow = "Task " <> showT startTaskId in
-        \case
-          Right _ -> putStrLn $ taskShow <> " has been started."
-          Left AlreadyStarted -> putStrLn $ taskShow <> " has already been started."
-          Left TaskNotFound -> putStrLn $ taskShow <> " doesn't exist."
+        startStopTask startTaskId "started"
       StopCommand StopOpts {..} ->
-        todoMessage
+        stopTask db (toSqlKey stopTaskId) >>=
+        startStopTask stopTaskId "stopped"
       AddCommand AddOpts{..} ->
         () <$ insertTask db addTaskName
       ListCommand -> do
