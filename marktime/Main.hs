@@ -11,6 +11,7 @@ import Database.Persist.Sqlite
 
 import Marktime.Database
 
+import Output
 import Parser
 
 -- FIXME: REMOVE THIS
@@ -20,16 +21,18 @@ todoMessage = putStrLn "This has yet to be implemented."
 main :: IO ()
 main = runMTParser >>=
   \ MarktimeOpts{..} -> do
-    db <- checkDBLocation mtDatabase
+    db <- migrateDB =<< checkDBLocation mtDatabase
     case mtCommand of
       StartCommand StartOpts{..}
         -> todoMessage
       StopCommand StopOpts {..}
         -> todoMessage
       AddCommand AddOpts{..}
-        -> () <$ insertTask addTaskName
+        -> () <$ insertTask db addTaskName
       ListCommand
-        -> listTasks
+        -> do tasks <- getAllTasks db
+              listTaskHeader
+              mapM_ printTask tasks
       InfoCommand InfoOpts{..}
         -> taskByKey db (toSqlKey infoTaskId) >>=
            \case

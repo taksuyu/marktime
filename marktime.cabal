@@ -45,4 +45,5 @@ executable marktime
                      , persistent-sqlite
                      , text
 
-  other-modules:       Parser
+  other-modules:       Output
+                     , Parser

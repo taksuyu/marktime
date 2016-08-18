@@ -7,14 +7,10 @@ module Marktime.Database where
 
 -- | Database transactions.
 
-import Prelude                 as P hiding (putStrLn)
-
 import Control.Monad.IO.Class  (liftIO)
 import Control.Monad.Logger
 
-import Data.Monoid
 import Data.Text               as T
-import Data.Text.IO
 import Data.Time
 
 import Database.Persist
@@ -31,12 +27,7 @@ showT = pack . show
 
 type Time = UTCTime
 type Date = Day
-
-newtype Location a
-  = Location Text
-  deriving (Show)
-
-data DB
+type DB = Text
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 ProjectStore
@@ -65,13 +56,13 @@ defaultTaskStore text time
 -- | If we are given a database path, then we'll trust the user that it is
 -- correct. Otherwise we have to make sure the default directories are in proper
 -- order.
-checkDBLocation :: Default FilePath -> IO (Location DB)
-checkDBLocation (Non path) = pure . Location . pack $ path
+checkDBLocation :: Default FilePath -> IO DB
+checkDBLocation (Non path) = pure . pack $ path
 checkDBLocation (Default)  = checkDefaultDBlocation
 
 -- | our default database and we'll make sure the directory already exists since
 -- `runSqlite` doesn't like it when it doesn't.
-checkDefaultDBlocation :: IO (Location DB)
+checkDefaultDBlocation :: IO DB
 checkDefaultDBlocation = do
   -- FIXME: Until directory gets updated to 1.2.3.0 or greater we can't use
   -- getXdgDirectory XdgConfig "marktime"
