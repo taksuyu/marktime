@@ -24,7 +24,7 @@ main = runMTParser >>=
     db <- migrateDB =<< checkDBLocation mtDatabase
     case mtCommand of
       StartCommand StartOpts{..}
-        -> todoMessage
+        -> startTask db (toSqlKey startTaskId)
       StopCommand StopOpts {..}
         -> todoMessage
       AddCommand AddOpts{..}

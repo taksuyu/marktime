@@ -73,43 +73,39 @@ checkDefaultDBlocation = do
 
   -- returning the location of our database since it's the same as building the
   -- filepath and extracting it after our check.
-  pure . Location $ pack (configdir </> "marktime.sqlite3")
+  pure $ pack (configdir </> "marktime.sqlite3")
+
+migrateDB :: DB -> IO DB
+migrateDB db = pure db <$ runDB db $ runMigration migrateAll
 
 -- FIXME: Perhaps we could do our migrations on startup and not with every
 -- database transaction?
 runDB :: Text -> SqlPersistT IO b -> IO b
 runDB dbPath dbAction = do
   runNoLoggingT . withSqlitePool dbPath 1 $
-    \pool -> liftIO $ runSqlPool migrateAction pool
-    where
-      migrateAction = do
-        runMigration migrateAll
-        dbAction
+    \pool -> liftIO $ runSqlPool dbAction pool
 
-insertTask :: Task -> IO (Key TaskStore)
-insertTask (Task t) = do
+startTask :: DB -> Key TaskStore -> IO ()
+startTask db key = do
   currentTime <- getCurrentTime
-  (Location db) <- checkDefaultDBlocation
+  runDB db $ do
+    task <- get key
+    case task of
+      Just TaskStore{..}
+        -> if taskStoreStartTime == Nothing
+           then update key [TaskStoreStartTime =. Just currentTime]
+           else pure ()
+      Nothing
+        -> pure ()
+
+insertTask :: DB -> Task -> IO (Key TaskStore)
+insertTask db (Task t) = do
+  currentTime <- getCurrentTime
   runDB db .
     insert $ defaultTaskStore t currentTime
 
--- TODO: Binded to a display action
-listTasks :: IO ()
-listTasks = do
-  (Location db) <- checkDefaultDBlocation
-  tasks <- runDB db $ selectList [] []
-  putStrLn "Tasks (Key: Description)"
-  mapM_ printTask tasks
-      where
-        printTask (Entity TaskStoreKey{..} TaskStore{..})
-          = putStrLn $ let keylength = T.length keyText
-                           keyText = showT (unSqlBackendKey unTaskStoreKey)
-                       in leftpad (10 - keylength) keyText  <> ": " <> taskStoreTaskDesc
+getAllTasks :: DB -> IO [Entity TaskStore]
+getAllTasks db = runDB db $ selectList [] []
 
-        -- FIXME: Text builder and fold
-        leftpad 0 str' = str'
-        leftpad n str' | n > 0 = " " <> leftpad (n - 1) str'
-                       | otherwise = leftpad 0 str'
-
-taskByKey :: Location DB -> Key TaskStore -> IO (Maybe TaskStore)
-taskByKey (Location db) = runDB db . get
+taskByKey :: DB -> Key TaskStore -> IO (Maybe TaskStore)
+taskByKey db = runDB db . get
