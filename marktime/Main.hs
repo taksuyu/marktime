@@ -25,12 +25,14 @@ main = runMTParser >>=
     case mtCommand of
       StartCommand StartOpts{..} ->
         startTask db (toSqlKey startTaskId) >>=
-        startStopTask startTaskId "started"
+        startStopPrint startTaskId "started"
       StopCommand StopOpts {..} ->
         stopTask db (toSqlKey stopTaskId) >>=
-        startStopTask stopTaskId "stopped"
+        startStopPrint stopTaskId "stopped"
       AddCommand AddOpts{..} ->
         () <$ insertTask db addTaskName
+      DeleteCommand DeleteOpts{..} ->
+        deleteTask db (toSqlKey delTaskId)
       ListCommand -> do
         tasks <- getAllTasks db
         listTaskHeader

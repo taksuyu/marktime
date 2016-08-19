@@ -122,6 +122,9 @@ insertTask db (Task t) = do
   runDB db .
     insert $ defaultTaskStore t currentTime
 
+deleteTask :: DB -> Key TaskStore -> IO ()
+deleteTask db key = runDB db $ delete key
+
 getAllTasks :: DB -> IO [Entity TaskStore]
 getAllTasks db = runDB db $ selectList [] []
 

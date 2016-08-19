@@ -35,6 +35,7 @@ data MarktimeCommand
   = StartCommand StartOpts
   | StopCommand StopOpts
   | AddCommand AddOpts
+  | DeleteCommand DeleteOpts
   | ListCommand
   | InfoCommand InfoOpts
   | ReportCommand ReportOpts
@@ -63,6 +64,12 @@ addOpts = fmap AddCommand $ pure AddOpts
   <*> (fmap Task . textArgument)
   (metavar "TASK"
     <> help "Name of the new task.")
+
+delOpts :: Parser MarktimeCommand
+delOpts = fmap DeleteCommand $ pure DeleteOpts
+  <*> int64Argument
+  (metavar "TASK"
+    <> help "Delete a task by it's key.")
 
 listOpts :: Parser MarktimeCommand
 listOpts = pure ListCommand
@@ -101,6 +108,11 @@ data AddOpts
   = AddOpts
     { addTaskProject :: Maybe Project
     , addTaskName    :: Task }
+  deriving (Show)
+
+data DeleteOpts
+  = DeleteOpts
+    { delTaskId :: Int64 }
   deriving (Show)
 
 data InfoOpts
@@ -147,6 +159,10 @@ marktimeParser = pure MarktimeOpts
     <> command "add"
     (info addOpts
      (progDesc "Add a new task to work on."))
+
+    <> command "delete"
+    (info delOpts
+     (progDesc "Delete a task."))
 
     <> command "list"
     (info listOpts
