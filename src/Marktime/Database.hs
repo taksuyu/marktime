@@ -68,7 +68,7 @@ checkDefaultDBlocation = do
   -- getXdgDirectory XdgConfig "marktime"
   configdir <- fmap (</> ".cache/marktime") getHomeDirectory
 
-  -- ~/.config should exist so no need to create parents.
+  -- ~/.cache should exist so no need to create parents.
   createDirectoryIfMissing False configdir
 
   -- returning the location of our database since it's the same as building the
@@ -127,6 +127,12 @@ deleteTask db key = runDB db $ delete key
 
 getAllTasks :: DB -> IO [Entity TaskStore]
 getAllTasks db = runDB db $ selectList [] []
+
+getUncompletedTasks :: DB -> IO [Entity TaskStore]
+getUncompletedTasks db = runDB db $ selectList
+  ([TaskStoreStartTime ==. Nothing]
+  ||. [TaskStoreStopTime ==. Nothing])
+  []
 
 taskByKey :: DB -> Key TaskStore -> IO (Maybe TaskStore)
 taskByKey db = runDB db . get

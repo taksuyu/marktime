@@ -34,7 +34,7 @@ main = runMTParser >>=
       DeleteCommand DeleteOpts{..} ->
         deleteTask db (toSqlKey delTaskId)
       ListCommand -> do
-        tasks <- getAllTasks db
+        tasks <- getUncompletedTasks db
         listTaskHeader
         mapM_ printTask tasks
       InfoCommand InfoOpts{..} ->
