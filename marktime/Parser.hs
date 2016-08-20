@@ -17,6 +17,9 @@ import Marktime.Common
 int64Argument :: Mod ArgumentFields Int64 -> Parser Int64
 int64Argument = argument auto
 
+intOption :: Mod OptionFields Int -> Parser Int
+intOption = option auto
+
 filepathOption :: Mod OptionFields FilePath -> Parser FilePath
 filepathOption = option auto
 
@@ -61,6 +64,12 @@ addOpts = fmap AddCommand $ pure AddOpts
     <> metavar "PROJECT"
     <> help "Assign the new task to a project.")
 
+  <*> (optional . intOption)
+  (long "priority"
+    <> short 'P'
+    <> metavar "NUM"
+    <> help "Assign the new task a priority; lowest is displayed first.")
+
   <*> (fmap Task . textArgument)
   (metavar "NAME"
     <> help "Create a task with the given name.")
@@ -93,46 +102,6 @@ reportOpts = fmap ReportCommand $ pure ReportOpts
     <> (help . P.concat)
     [ "Executable to process information into a presentable form."
     , "These can be found in ~/.cache/marktime/layouts"])
-
-data StartOpts
-  = StartOpts
-    { startTaskId :: Int64 }
-  deriving (Show)
-
-data StopOpts
-  = StopOpts
-    { stopTaskId :: Int64 }
-  deriving (Show)
-
-data AddOpts
-  = AddOpts
-    { addTaskProject :: Maybe Project
-    , addTaskName    :: Task }
-  deriving (Show)
-
-data DeleteOpts
-  = DeleteOpts
-    { delTaskId :: Int64 }
-  deriving (Show)
-
-data InfoOpts
-  = InfoOpts
-    { infoTaskId :: Int64 }
-  deriving (Show)
-
-data ReportOpts
-  = ReportOpts
-    { reportOutput :: Maybe ReportOutput
-    , reportLayout :: ReportLayout }
-  deriving (Show)
-
-newtype ReportOutput
-  = ReportOutput Text
-  deriving (Show)
-
-newtype ReportLayout
-  = ReportLayout Text
-  deriving (Show)
 
 marktimeParser :: Parser MarktimeOpts
 marktimeParser = pure MarktimeOpts

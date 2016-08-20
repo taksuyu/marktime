@@ -9,6 +9,7 @@ import Data.Text.IO
 
 import Database.Persist.Sqlite
 
+import Marktime.Common
 import Marktime.Database
 
 import Output
@@ -29,8 +30,9 @@ main = runMTParser >>=
       StopCommand StopOpts {..} ->
         stopTask db (toSqlKey stopTaskId) >>=
         printStopTask stopTaskId
-      AddCommand AddOpts{..} ->
-        () <$ insertTask db addTaskName
+      AddCommand a -> do
+        taskKey <- insertTask db a
+        putStrLn $ showT (fromSqlKey taskKey) <> " has been added."
       DeleteCommand DeleteOpts{..} ->
         deleteTask db (toSqlKey delTaskId)
       ListCommand -> do

@@ -1,6 +1,5 @@
-{-# LANGUAGE ExistentialQuantification, GADTs, GeneralizedNewtypeDeriving,
-             MultiParamTypeClasses, OverloadedStrings, QuasiQuotes,
-             RecordWildCards, TemplateHaskell, TypeFamilies #-}
+{-# LANGUAGE OverloadedStrings,
+             RecordWildCards #-}
 
 -- | Stability: Experimental
 module Marktime.Database where
@@ -15,39 +14,11 @@ import Data.Time
 
 import Database.Persist
 import Database.Persist.Sqlite
-import Database.Persist.TH
 
 import System.Directory
 import System.FilePath
 
 import Marktime.Common
-
-showT :: Show a => a -> Text
-showT = pack . show
-
-type Time = UTCTime
-type Date = Day
-type DB = Text
-
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-ProjectStore
-    projectDesc Text
-MilestoneStore
-    milestoneDesc Text
-    milestoneProject ProjectStoreId
-    deriving Show
-TaskStore
-    taskDesc Text
-    dueDate Date Maybe
-    creationTime Time
-    startTime Time Maybe
-    stopTime Time Maybe
-    dependencies [TaskStoreId]
-    priority Int Maybe
-    taskMilestone MilestoneStoreId Maybe
-    taskProject ProjectStoreId Maybe
-    deriving Show
-|]
 
 defaultTaskStore :: Text -> Time -> TaskStore
 defaultTaskStore text time
@@ -129,9 +100,9 @@ stopTask db key = runDBGetTime db $ \time -> do
     Nothing ->
       pure (Left StopTaskNotFound)
 
-insertTask :: DB -> Task -> IO (Key TaskStore)
-insertTask db (Task t) = runDBGetTime db $ \time ->
-  insert $ defaultTaskStore t time
+insertTask :: DB -> AddOpts -> IO (Key TaskStore)
+insertTask db AddOpts{..} = runDBGetTime db $ \time ->
+  insert $ (defaultTaskStore (unTask addTaskName) time){ taskStorePriority = addTaskPriority }
 
 deleteTask :: DB -> Key TaskStore -> IO ()
 deleteTask db key = runDB db $ delete key

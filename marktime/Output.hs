@@ -13,6 +13,7 @@ import Data.Text.IO
 
 import Database.Persist.Sqlite
 
+import Marktime.Common
 import Marktime.Database
 
 listTaskHeader :: IO ()
