@@ -44,13 +44,13 @@ data MarktimeCommand
 startOpts :: Parser MarktimeCommand
 startOpts = fmap StartCommand $ pure StartOpts
   <*> int64Argument
-  (metavar "TASK"
+  (metavar "KEY"
     <> help "Start a task by it's key.")
 
 stopOpts :: Parser MarktimeCommand
 stopOpts = fmap StopCommand $ pure StopOpts
   <*> int64Argument
-  (metavar "TASK"
+  (metavar "KEY"
     <> help "Stop a task by it's key.")
 
 addOpts :: Parser MarktimeCommand
@@ -62,13 +62,13 @@ addOpts = fmap AddCommand $ pure AddOpts
     <> help "Assign the new task to a project.")
 
   <*> (fmap Task . textArgument)
-  (metavar "TASK"
-    <> help "Name of the new task.")
+  (metavar "NAME"
+    <> help "Create a task with the given name.")
 
 delOpts :: Parser MarktimeCommand
 delOpts = fmap DeleteCommand $ pure DeleteOpts
   <*> int64Argument
-  (metavar "TASK"
+  (metavar "KEY"
     <> help "Delete a task by it's key.")
 
 listOpts :: Parser MarktimeCommand
