@@ -78,49 +78,60 @@ checkDefaultDBlocation = do
 migrateDB :: DB -> IO DB
 migrateDB db = pure db <$ runDB db $ runMigration migrateAll
 
--- FIXME: Perhaps we could do our migrations on startup and not with every
--- database transaction?
-runDB :: Text -> SqlPersistT IO b -> IO b
+runDB :: DB -> SqlPersistT IO b -> IO b
 runDB dbPath dbAction = do
   runNoLoggingT . withSqlitePool dbPath 1 $
     \pool -> liftIO $ runSqlPool dbAction pool
 
-data TaskError
-  = AlreadyThere
-  | TaskNotFound
+runDBGetTime :: DB -> (UTCTime -> SqlPersistT IO b) -> IO b
+runDBGetTime db dbAction = do
+  currentTime <- getCurrentTime
+  runDB db $ dbAction currentTime
+
+data StartTaskError
+  = AlreadyStarted
+  | StartTaskNotFound
   deriving (Eq, Show)
 
--- | All time fields have the same property that you want to check if it's
--- already there before ever setting the current time.
-updateTimeOnTask
-  :: (TaskStore -> Maybe Time) -> EntityField TaskStore (Maybe Time)
-  -> DB -> Key TaskStore -> IO (Either TaskError ())
-updateTimeOnTask timeField entityField db key = do
-  currentTime <- getCurrentTime
-  runDB db $ do
-    task <- get key
-    case task of
-      Just a ->
-        case timeField a of
-          Nothing -> do
-            update key [entityField =. Just currentTime]
-            pure $ Right ()
-          Just _ ->
-            pure (Left AlreadyThere)
-      Nothing ->
-        pure (Left TaskNotFound)
+startTask :: DB -> Key TaskStore -> IO (Either StartTaskError ())
+startTask db key = runDBGetTime db $ \ time -> do
+  task <- get key
+  case task of
+    Just TaskStore{..} ->
+      case taskStoreStartTime of
+        Nothing -> do
+          update key [TaskStoreStartTime =. Just time]
+          pure (Right ())
+        Just _ ->
+          pure (Left AlreadyStarted)
+    Nothing ->
+      pure (Left StartTaskNotFound)
 
-startTask :: DB -> Key TaskStore -> IO (Either TaskError ())
-startTask = updateTimeOnTask taskStoreStartTime TaskStoreStartTime
+data StopTaskError
+  = AlreadyStopped
+  | NotStarted
+  | StopTaskNotFound
+  deriving (Eq, Show)
 
-stopTask :: DB -> Key TaskStore -> IO (Either TaskError ())
-stopTask = updateTimeOnTask taskStoreStopTime TaskStoreStopTime
+stopTask :: DB -> Key TaskStore -> IO (Either StopTaskError ())
+stopTask db key = runDBGetTime db $ \time -> do
+  task <- get key
+  case task of
+    Just TaskStore{..} ->
+      case (taskStoreStartTime, taskStoreStopTime) of
+        (Just _, Nothing) -> do
+          update key [TaskStoreStopTime =. Just time]
+          pure (Right ())
+        (Just _, Just _) ->
+          pure (Left AlreadyStopped)
+        (Nothing, _) ->
+          pure (Left NotStarted)
+    Nothing ->
+      pure (Left StopTaskNotFound)
 
 insertTask :: DB -> Task -> IO (Key TaskStore)
-insertTask db (Task t) = do
-  currentTime <- getCurrentTime
-  runDB db .
-    insert $ defaultTaskStore t currentTime
+insertTask db (Task t) = runDBGetTime db $ \time ->
+  insert $ defaultTaskStore t time
 
 deleteTask :: DB -> Key TaskStore -> IO ()
 deleteTask db key = runDB db $ delete key

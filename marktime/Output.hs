@@ -29,10 +29,18 @@ leftpad :: Int -> Text -> Text
 leftpad 0 str' = str'
 leftpad n str' | n > 0 = " " <> leftpad (n - 1) str'
                | otherwise = leftpad 0 str'
+taskShow :: Int64 -> Text -> IO ()
+taskShow i t = putStrLn $ "Task " <> showT i <> t
 
-startStopPrint :: Int64 -> Text -> Either TaskError () -> IO ()
-startStopPrint i t = let taskShow t' = putStrLn $ "Task " <> showT i <> t' in
-  \case
-    Right _ -> taskShow (" has been " <> t <> ".")
-    Left AlreadyThere -> taskShow (" has already been " <> t <> ".")
-    Left TaskNotFound -> taskShow (" doesn't exist")
+printStartTask :: Int64 -> Either StartTaskError () -> IO ()
+printStartTask i = let t = taskShow i in \case
+  Right _ -> t " has been started."
+  Left AlreadyStarted -> t " has already been started."
+  Left StartTaskNotFound -> t " doesn't exist"
+
+printStopTask :: Int64 -> Either StopTaskError () -> IO ()
+printStopTask i = let t = taskShow i in \case
+  Right _ -> t " has been stopped."
+  Left AlreadyStopped -> t " has already been stopped."
+  Left NotStarted -> t " hasn't been started yet."
+  Left StopTaskNotFound -> t " doesn't exist."
