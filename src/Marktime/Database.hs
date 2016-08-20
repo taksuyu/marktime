@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings,
-             RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
 
 -- | Stability: Experimental
 module Marktime.Database where
@@ -22,7 +21,7 @@ import Marktime.Common
 
 defaultTaskStore :: Text -> Time -> TaskStore
 defaultTaskStore text time
-  = TaskStore text Nothing time Nothing Nothing mempty Nothing Nothing Nothing
+  = TaskStore text Nothing time Nothing Nothing mempty Nothing Nothing Nothing False False
 
 -- | If we are given a database path, then we'll trust the user that it is
 -- correct. Otherwise we have to make sure the default directories are in proper
@@ -47,7 +46,9 @@ checkDefaultDBlocation = do
   pure $ pack (configdir </> "marktime.sqlite3")
 
 migrateDB :: DB -> IO DB
-migrateDB db = pure db <$ runDB db $ runMigration migrateAll
+migrateDB db = do
+  runDB db $ runMigration migrateAll
+  pure db
 
 runDB :: DB -> SqlPersistT IO b -> IO b
 runDB dbPath dbAction = do
@@ -91,7 +92,7 @@ stopTask db key = runDBGetTime db $ \time -> do
     Just TaskStore{..} ->
       case (taskStoreStartTime, taskStoreStopTime) of
         (Just _, Nothing) -> do
-          update key [TaskStoreStopTime =. Just time]
+          update key [TaskStoreStopTime =. Just time, TaskStoreFinished =. True]
           pure (Right ())
         (Just _, Just _) ->
           pure (Left AlreadyStopped)
@@ -100,21 +101,23 @@ stopTask db key = runDBGetTime db $ \time -> do
     Nothing ->
       pure (Left StopTaskNotFound)
 
+-- FIXME: UGLY! Change that generation please.
 insertTask :: DB -> AddOpts -> IO (Key TaskStore)
 insertTask db AddOpts{..} = runDBGetTime db $ \time ->
   insert $ (defaultTaskStore (unTask addTaskName) time){ taskStorePriority = addTaskPriority }
 
 deleteTask :: DB -> Key TaskStore -> IO ()
-deleteTask db key = runDB db $ delete key
+deleteTask db key = runDB db $ update key [TaskStoreDeleted =. True]
+
+finishTask :: DB -> Key TaskStore -> IO ()
+finishTask db key = runDB db $ update key [TaskStoreFinished =. True]
 
 getAllTasks :: DB -> IO [Entity TaskStore]
 getAllTasks db = runDB db $ selectList [] []
 
 getUncompletedTasks :: DB -> IO [Entity TaskStore]
 getUncompletedTasks db = runDB db $ selectList
-  ([TaskStoreStartTime ==. Nothing]
-  ||. [TaskStoreStopTime ==. Nothing])
-  []
+  [TaskStoreDeleted ==. False, TaskStoreFinished ==. False] []
 
 taskByKey :: DB -> Key TaskStore -> IO (Maybe TaskStore)
 taskByKey db = runDB db . get

@@ -35,6 +35,8 @@ main = runMTParser >>=
         putStrLn $ showT (fromSqlKey taskKey) <> " has been added."
       DeleteCommand DeleteOpts{..} ->
         deleteTask db (toSqlKey delTaskId)
+      FinishCommand FinishOpts{..} ->
+        finishTask db (toSqlKey finishTaskId)
       ListCommand -> do
         tasks <- getUncompletedTasks db
         listTaskHeader

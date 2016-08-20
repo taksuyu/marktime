@@ -71,6 +71,11 @@ data DeleteOpts
     { delTaskId :: Int64 }
   deriving (Show)
 
+data FinishOpts
+  = FinishOpts
+    { finishTaskId :: Int64 }
+  deriving (Show)
+
 data InfoOpts
   = InfoOpts
     { infoTaskId :: Int64 }
@@ -109,5 +114,7 @@ TaskStore
     priority Int Maybe
     taskMilestone MilestoneStoreId Maybe
     taskProject ProjectStoreId Maybe
+    deleted Bool
+    finished Bool
     deriving Show
 |]

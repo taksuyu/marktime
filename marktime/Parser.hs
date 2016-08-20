@@ -7,7 +7,6 @@ module Parser where
 import Prelude                  as P
 
 import Data.Int
-import Data.Text                as T
 
 import Options.Applicative
 import Options.Applicative.Text
@@ -39,6 +38,7 @@ data MarktimeCommand
   | StopCommand StopOpts
   | AddCommand AddOpts
   | DeleteCommand DeleteOpts
+  | FinishCommand FinishOpts
   | ListCommand
   | InfoCommand InfoOpts
   | ReportCommand ReportOpts
@@ -79,6 +79,12 @@ delOpts = fmap DeleteCommand $ pure DeleteOpts
   <*> int64Argument
   (metavar "KEY"
     <> help "Delete a task by it's key.")
+
+finishOpts :: Parser MarktimeCommand
+finishOpts = fmap FinishCommand $ pure FinishOpts
+  <*> int64Argument
+  (metavar "KEY"
+    <> help "Finish a task by their key.")
 
 listOpts :: Parser MarktimeCommand
 listOpts = pure ListCommand
@@ -132,6 +138,10 @@ marktimeParser = pure MarktimeOpts
     <> command "delete"
     (info delOpts
      (progDesc "Delete a task."))
+
+    <> command "finish"
+    (info finishOpts
+     (progDesc "Finish a task."))
 
     <> command "list"
     (info listOpts
