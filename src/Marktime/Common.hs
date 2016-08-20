@@ -68,12 +68,12 @@ data AddOpts
 
 data DeleteOpts
   = DeleteOpts
-    { delTaskId :: Int64 }
+    { delTaskIds :: [Int64] }
   deriving (Show)
 
 data FinishOpts
   = FinishOpts
-    { finishTaskId :: Int64 }
+    { finishTaskIds :: [Int64] }
   deriving (Show)
 
 data InfoOpts

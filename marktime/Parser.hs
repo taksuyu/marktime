@@ -76,15 +76,15 @@ addOpts = fmap AddCommand $ pure AddOpts
 
 delOpts :: Parser MarktimeCommand
 delOpts = fmap DeleteCommand $ pure DeleteOpts
-  <*> int64Argument
+  <*> some (int64Argument
   (metavar "KEY"
-    <> help "Delete a task by it's key.")
+    <> help "Delete tasks by it's key."))
 
 finishOpts :: Parser MarktimeCommand
 finishOpts = fmap FinishCommand $ pure FinishOpts
-  <*> int64Argument
+  <*> some (int64Argument
   (metavar "KEY"
-    <> help "Finish a task by their key.")
+    <> help "Finish tasks by their key."))
 
 listOpts :: Parser MarktimeCommand
 listOpts = pure ListCommand
