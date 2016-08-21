@@ -113,15 +113,12 @@ newtype ReportLayout
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 ProjectStore
     projectDesc Text
-    projectLongDesc Text Maybe
 MilestoneStore
     milestoneDesc Text
-    milestoneLongDesc Text Maybe
     milestoneProject ProjectStoreId
     deriving Show
 TaskStore
     taskDesc Text
-    taskLongDesc Text Maybe
     dueDate Date Maybe
     creationTime Time
     startTime Time Maybe
