@@ -76,6 +76,19 @@ data FinishOpts
     { finishTaskIds :: [Int64] }
   deriving (Show)
 
+data SetOpts
+  = SetOpts
+    { setTaskShortDesc    :: Maybe Text
+    , setTaskLongDesc     :: Maybe Text
+    , setTaskDependencies :: Maybe [Int64]
+    , setTaskPriority     :: Maybe Int
+    , setTaskMilestone    :: Maybe Int64
+    , setTaskProject      :: Maybe Int64
+    , setTaskDeleted      :: Maybe Bool
+    , setTaskFinished     :: Maybe Bool
+    , setTaskIds          :: [Int64] }
+  deriving (Show)
+
 data InfoOpts
   = InfoOpts
     { infoTaskId :: Int64 }
