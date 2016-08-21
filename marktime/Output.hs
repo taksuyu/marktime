@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, RecordWildCards, LambdaCase #-}
+{-# LANGUAGE LambdaCase, OverloadedStrings, RecordWildCards #-}
 
 module Output where
 
@@ -7,6 +7,8 @@ module Output where
 import Prelude                 as P hiding (putStrLn)
 
 import Data.Int
+import Data.List               as L
+import Data.Maybe
 import Data.Monoid
 import Data.Text               as T
 import Data.Text.IO
@@ -16,20 +18,30 @@ import Database.Persist.Sqlite
 import Marktime.Common
 import Marktime.Database
 
-listTaskHeader :: IO ()
-listTaskHeader = putStrLn "Tasks (Key: Description)"
+printTasks :: [Entity TaskStore] -> IO ()
+printTasks []
+  = putStrLn "No tasks were found."
+printTasks ts = do
+  putStrLn $ taskHeader <> " - Started"
+  mapM_ printTask started
+  putStrLn ""
+  putStrLn $ taskHeader <> " - Unfinished"
+  mapM_ printTask unfinished
+    where
+      taskHeader = "Tasks (Key: Description)"
+      (started, unfinished) = L.partition (\(Entity _ TaskStore{..}) -> isJust taskStoreStartTime) ts
 
-printTask :: Entity TaskStore -> IO ()
-printTask (Entity TaskStoreKey{..} TaskStore{..})
-  = putStrLn $ let keylength = T.length keyText
-                   keyText = showT (unSqlBackendKey unTaskStoreKey)
-               in leftpad (10 - keylength) keyText  <> ": " <> taskStoreTaskDesc
+      printTask (Entity TaskStoreKey{..} TaskStore{..})
+        = putStrLn $ let keylength = T.length keyText
+                         keyText = showT (unSqlBackendKey unTaskStoreKey)
+                     in leftpad (10 - keylength) keyText  <> ": " <> taskStoreTaskDesc
 
 -- FIXME: Text builder and fold
 leftpad :: Int -> Text -> Text
 leftpad 0 str' = str'
 leftpad n str' | n > 0 = " " <> leftpad (n - 1) str'
                | otherwise = leftpad 0 str'
+
 taskShow :: Int64 -> Text -> IO ()
 taskShow i t = putStrLn $ "Task " <> showT i <> t
 

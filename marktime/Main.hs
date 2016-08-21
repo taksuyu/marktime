@@ -38,9 +38,7 @@ main = runMTParser >>=
       FinishCommand FinishOpts{..} ->
         mapM_ (finishTask db . toSqlKey) finishTaskIds
       ListCommand -> do
-        tasks <- getUncompletedTasks db
-        listTaskHeader
-        mapM_ printTask tasks
+        printTasks =<< getUncompletedTasks db
       InfoCommand InfoOpts{..} ->
         taskByKey db (toSqlKey infoTaskId) >>=
         \case
