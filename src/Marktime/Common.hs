@@ -128,7 +128,7 @@ TaskStore
     creationTime Time
     startTime Time Maybe
     stopTime Time Maybe
-    durations [Int]
+    durations [Rational]
     dependencies [TaskStoreId]
     priority Int Maybe
     taskMilestone MilestoneStoreId Maybe

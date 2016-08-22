@@ -121,9 +121,7 @@ pauseTask db key = runDBGetTime db $ \time -> do
       case (taskStoreStartTime, taskStoreFinished) of
         (Just a, False) -> do
           update key [ TaskStoreStartTime =. Nothing
-                     -- We can store the Int version of NominalDiffTime cause 3
-                     -- years would have to elapse to lose precision.
-                     , TaskStoreDurations =. fromEnum (diffUTCTime time a) : taskStoreDurations ]
+                     , TaskStoreDurations =. toRational (diffUTCTime time a) : taskStoreDurations ]
           pure (Right ())
         (_, True) ->
           pure (Left AlreadyFinished)
