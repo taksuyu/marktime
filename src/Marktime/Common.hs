@@ -59,6 +59,11 @@ data StopOpts
     { stopTaskId :: Int64 }
   deriving (Show)
 
+data PauseOpts
+  = PauseOpts
+    { pauseTaskId :: Int64 }
+  deriving (Show)
+
 data AddOpts
   = AddOpts
     { addTaskProject  :: Maybe Project
@@ -123,6 +128,7 @@ TaskStore
     creationTime Time
     startTime Time Maybe
     stopTime Time Maybe
+    durations [Int]
     dependencies [TaskStoreId]
     priority Int Maybe
     taskMilestone MilestoneStoreId Maybe

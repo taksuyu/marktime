@@ -27,9 +27,12 @@ main = runMTParser >>=
       StartCommand StartOpts{..} ->
         startTask db (toSqlKey startTaskId) >>=
         printStartTask startTaskId
-      StopCommand StopOpts {..} ->
+      StopCommand StopOpts{..} ->
         stopTask db (toSqlKey stopTaskId) >>=
         printStopTask stopTaskId
+      PauseCommand PauseOpts{..} ->
+        pauseTask db (toSqlKey pauseTaskId) >>=
+        printPauseTask pauseTaskId
       AddCommand a -> do
         taskKey <- insertTask db a
         putStrLn $ showT (fromSqlKey taskKey) <> " has been added."

@@ -36,6 +36,7 @@ data MarktimeOpts
 data MarktimeCommand
   = StartCommand StartOpts
   | StopCommand StopOpts
+  | PauseCommand PauseOpts
   | AddCommand AddOpts
   | DeleteCommand DeleteOpts
   | FinishCommand FinishOpts
@@ -55,6 +56,12 @@ stopOpts = fmap StopCommand $ pure StopOpts
   <*> int64Argument
   (metavar "KEY"
     <> help "Stop a task by it's key.")
+
+pauseOpts :: Parser MarktimeCommand
+pauseOpts = fmap PauseCommand $ pure PauseOpts
+  <*> int64Argument
+  (metavar "KEY"
+    <> help "Pause a task by it's key.")
 
 addOpts :: Parser MarktimeCommand
 addOpts = fmap AddCommand $ pure AddOpts
@@ -130,6 +137,10 @@ marktimeParser = pure MarktimeOpts
     <> command "stop"
     (info stopOpts
      (progDesc "Stop tracking a task."))
+
+    <> command "pause"
+    (info pauseOpts
+     (progDesc "Pause tracking a task."))
 
     <> command "add"
     (info addOpts

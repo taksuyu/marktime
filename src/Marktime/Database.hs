@@ -21,7 +21,13 @@ import Marktime.Common
 
 defaultTaskStore :: Text -> Time -> TaskStore
 defaultTaskStore text time
-  = TaskStore text Nothing time Nothing Nothing mempty Nothing Nothing Nothing False False
+  = TaskStore text
+  -- Times
+  Nothing time Nothing Nothing
+  -- Lists
+  mempty mempty
+  -- Associations
+  Nothing Nothing Nothing False False
 
 -- | If we are given a database path, then we'll trust the user that it is
 -- correct. Otherwise we have to make sure the default directories are in proper
@@ -100,6 +106,31 @@ stopTask db key = runDBGetTime db $ \time -> do
           pure (Left NotStarted)
     Nothing ->
       pure (Left StopTaskNotFound)
+
+data PauseTaskError
+  = AlreadyFinished
+  | PauseNotStarted
+  | PauseTaskNotFound
+  deriving (Eq, Show)
+
+pauseTask :: DB -> Key TaskStore -> IO (Either PauseTaskError ())
+pauseTask db key = runDBGetTime db $ \time -> do
+  task <- get key
+  case task of
+    Just TaskStore{..} ->
+      case (taskStoreStartTime, taskStoreFinished) of
+        (Just a, False) -> do
+          update key [ TaskStoreStartTime =. Nothing
+                     -- We can store the Int version of NominalDiffTime cause 3
+                     -- years would have to elapse to lose precision.
+                     , TaskStoreDurations =. fromEnum (diffUTCTime time a) : taskStoreDurations ]
+          pure (Right ())
+        (_, True) ->
+          pure (Left AlreadyFinished)
+        (Nothing, _) ->
+          pure (Left PauseNotStarted)
+    Nothing ->
+      pure (Left PauseTaskNotFound)
 
 -- FIXME: UGLY! Change that generation please.
 insertTask :: DB -> AddOpts -> IO (Key TaskStore)
