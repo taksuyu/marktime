@@ -24,9 +24,9 @@ filepathOption = option auto
 
 data MarktimeOpts
   = MarktimeOpts
-    { mtQuiet   :: Default Bool
+    { mtQuiet   :: Bool
       -- ^ Suppress output?
-    , mtDatabase :: Default FilePath
+    , mtDatabase :: Maybe FilePath
       -- ^ Path to database
 
       -- Commands
@@ -118,12 +118,12 @@ reportOpts = fmap ReportCommand $ pure ReportOpts
 
 marktimeParser :: Parser MarktimeOpts
 marktimeParser = pure MarktimeOpts
-  <*> (flag Default (Non True))
+  <*> (flag False True)
   (long "quiet"
     <> short 'q'
     <> help "Suppress output.")
 
-  <*> (optionalDefault . filepathOption)
+  <*> (optional . filepathOption)
   (long "database"
     <> short 'd'
     <> metavar "FILE"

@@ -5,8 +5,6 @@
 -- | Stability: Experimental
 module Marktime.Common where
 
-import Control.Applicative
-
 import Data.Int
 import Data.Text
 import Data.Time
@@ -24,21 +22,6 @@ newtype Project
   = Project
     { unProject :: Text }
   deriving (Show)
-
-data Default a
-  = Default
-  | Non a
-  deriving ( Eq, Show
-           , Functor )
-
-instance Applicative Default where
-  pure = Non
-
-  Default <*> _ = Default
-  Non fn  <*> a = fmap fn a
-
-optionalDefault :: Alternative f => f a -> f (Default a)
-optionalDefault v = Non <$> v <|> pure Default
 
 showT :: Show a => a -> Text
 showT = pack . show

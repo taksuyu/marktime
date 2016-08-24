@@ -32,9 +32,9 @@ defaultTaskStore text time
 -- | If we are given a database path, then we'll trust the user that it is
 -- correct. Otherwise we have to make sure the default directories are in proper
 -- order.
-checkDBLocation :: Default FilePath -> IO DB
-checkDBLocation (Non path) = pure . pack $ path
-checkDBLocation (Default)  = checkDefaultDBlocation
+checkDBLocation :: Maybe FilePath -> IO DB
+checkDBLocation (Just path) = pure . pack $ path
+checkDBLocation (Nothing)   = checkDefaultDBlocation
 
 -- | our default database and we'll make sure the directory already exists since
 -- `runSqlite` doesn't like it when it doesn't.
