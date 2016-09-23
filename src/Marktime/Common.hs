@@ -73,7 +73,7 @@ data SetOpts
     , setTaskMilestone    :: Maybe Int64
     , setTaskProject      :: Maybe Int64
     , setTaskDeleted      :: Maybe Bool
-    , setTaskFinished     :: Maybe Bool
+    , setTaskFnished      :: Maybe Bool
     , setTaskIds          :: [Int64] }
   deriving (Show)
 
@@ -101,9 +101,9 @@ newtype ReportLayout
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 ProjectStore
     projectDesc Text
+    deriving Show
 MilestoneStore
     milestoneDesc Text
-    milestoneProject ProjectStoreId
     deriving Show
 TaskStore
     taskDesc Text
