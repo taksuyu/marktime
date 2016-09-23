@@ -121,7 +121,7 @@ pauseTask db key = runDBGetTime db $ \time -> do
       case (taskStoreStartTime, taskStoreFinished) of
         (Just a, False) -> do
           update key [ TaskStoreStartTime =. Nothing
-                     , TaskStoreDurations =. toRational (diffUTCTime time a) : taskStoreDurations ]
+                     , TaskStoreDurations =. TimeTo (a, time) : taskStoreDurations ]
           pure (Right ())
         (_, True) ->
           pure (Left AlreadyFinished)

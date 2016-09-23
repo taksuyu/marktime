@@ -9,6 +9,7 @@ import Data.Int
 import Data.Text
 import Data.Time
 
+import Database.Persist
 import Database.Persist.TH
 
 -- * Utility types
@@ -98,6 +99,27 @@ newtype ReportLayout
 
 -- * Persistent types
 
+data TimeTo
+  = TimeTo (Time, Time)
+    -- ^ Time from one timestamp to another.
+  | TimeDiff Rational
+    -- ^ This is included if we want to talk about time as a difference. Also in
+    -- the case that we don't have the timestamps of each time.
+  deriving (Show)
+
+instance PersistField TimeTo where
+  toPersistValue (TimeTo   t) = toPersistValue t
+  toPersistValue (TimeDiff d) = toPersistValue d
+
+  fromPersistValue a@(PersistList _) =
+    case fromPersistValue a of
+      Right (PersistUTCTime t, PersistUTCTime u) -> Right $ TimeTo (t, u)
+      e -> Left . pack $ "Expected Right (PersistList [UTCTime, UTCTime]), recieved: " ++ show e
+  fromPersistValue (PersistRational r) =
+    Right $ TimeDiff r
+  fromPersistValue e =
+    Left . pack $ "Expected PersistList [UTCTime, UTCTime] or PersistRational, recieved: " ++ show e
+
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 ProjectStore
     projectDesc Text
@@ -111,7 +133,7 @@ TaskStore
     creationTime Time
     startTime Time Maybe
     stopTime Time Maybe
-    durations [Rational]
+    durations [TimeTo]
     dependencies [TaskStoreId]
     priority Int Maybe
     taskMilestone MilestoneStoreId Maybe
